@@ -100,6 +100,19 @@ class FlatpakWatcher(pyinotify.ProcessEvent):
             sync_desktop_files()
 
 
+def create_executable(app_name, run_command):
+    """Create executable bash scripts for the apps in /usr/bin"""
+    try:
+        with open (f"/usr/bin/{app_name}", "w") as file:
+            file.write("#!/bin/bash\n")
+            file.write(run_command)
+        os.chmod(f"/usr/bin/{app_name}", 0o755)
+        logging.info(f"Created new executable: /usr/bin/{app_name}")
+    
+    except Exception as e:
+        logging.error(f"Error in create_executable: {str(e)}")
+
+
 def main():
     try:
         logging.info("Flatpak menu sync service started")
