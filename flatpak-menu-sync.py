@@ -134,7 +134,7 @@ def create_executable(app_name, run_command):
     """Create executable bash scripts for the apps in /usr/bin"""
     app_name = app_name.replace(" ", "")
     try:
-        if not os.path.exists(f"usr/bin/{app_name}"):
+        if not os.path.exists(f"/usr/bin/{app_name}"):
             with open (f"/usr/bin/{app_name}", "w") as file:
                 file.write("#!/bin/bash\n")
                 file.write(run_command)
