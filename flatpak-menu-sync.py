@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+auto_create_executables = True
+
 import os
 import sys
 import shutil
@@ -42,6 +44,18 @@ def check_directories():
     if not os.access(TARGET_DIR, os.W_OK):
         logging.error(f"Cannot write to target directory: {TARGET_DIR}")
         return False
+
+    if auto_create_executables:
+        if not os.path.exists("/usr/bin"):
+            logging.error("/usr/bin does not exist (something is seriously wrong)")
+            return False
+        if not os.access("/usr/bin", os.R_OK):
+            logging.error("Cannot read from /usr/bin")
+            return False
+        if not os.access("/usr/bin", os.W_OK):
+            logging.error("Cannot write to /usr/bin")
+            return False
+
     return True
 
 
@@ -77,7 +91,23 @@ def sync_desktop_files():
                     logging.info(f"Removed obsolete file: {target_file.name}")
                 except Exception as e:
                     logging.error(f"Error removing {target_file.name}: {str(e)}")
+        
+        # Create executables in /usr/bin
+        if auto_create_executables:
+            try:
+                for file in os.listdir(TARGET_DIR):
+                    if file.endswith(".desktop"):
+                        file_path = os.path.join(TARGET_DIR, file)
+                        with open(file_path, "r") as opened_file:
+                            content = opened_file.read()
+                        name_line = (content.split('Name=', 1)[1].splitlines()[0]).lower()
+                        exec_line = content.split('Exec=', 1)[1].splitlines()[0]
+                        create_executable(str(name_line), str(exec_line))
+            except Exception as e:
+                logging.error(f"Error while creating executable: {str(e)}")
+
         return True
+
     except Exception as e:
         logging.error(f"Unexpected error in sync_desktop_files: {str(e)}")
         return False
@@ -102,12 +132,16 @@ class FlatpakWatcher(pyinotify.ProcessEvent):
 
 def create_executable(app_name, run_command):
     """Create executable bash scripts for the apps in /usr/bin"""
+    app_name = app_name.replace(" ", "")
     try:
-        with open (f"/usr/bin/{app_name}", "w") as file:
-            file.write("#!/bin/bash\n")
-            file.write(run_command)
-        os.chmod(f"/usr/bin/{app_name}", 0o755)
-        logging.info(f"Created new executable: /usr/bin/{app_name}")
+        if not os.path.exists(f"usr/bin/{app_name}"):
+            with open (f"/usr/bin/{app_name}", "w") as file:
+                file.write("#!/bin/bash\n")
+                file.write(run_command)
+            os.chmod(f"/usr/bin/{app_name}", 0o755)
+            logging.info(f"Created new executable: /usr/bin/{app_name}")
+        else:
+            logging.info(f"Executable for {app_name} already exists in /usr/bin, skipping")
     
     except Exception as e:
         logging.error(f"Error in create_executable: {str(e)}")
