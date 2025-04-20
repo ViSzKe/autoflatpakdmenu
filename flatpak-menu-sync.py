@@ -134,12 +134,12 @@ def create_executable(app_name, run_command):
     """Create executable bash scripts for the apps in /usr/bin"""
     app_name = app_name.replace(" ", "")
     try:
-        if not os.path.exists(f"/usr/bin/{app_name}"):
-            with open (f"/usr/bin/{app_name}", "w") as file:
+        if not os.path.exists(f"/usr/bin/applications/{app_name}-app"):
+            with open (f"/usr/bin/applications/{app_name}-app", "w") as file:
                 file.write("#!/bin/bash\n")
                 file.write(run_command)
-            os.chmod(f"/usr/bin/{app_name}", 0o755)
-            logging.info(f"Created new executable: /usr/bin/{app_name}")
+            os.chmod(f"/usr/bin/applications/{app_name}-app", 0o755)
+            logging.info(f"Created new executable: /usr/bin/applications/{app_name}-app")
         else:
             logging.info(f"Executable for {app_name} already exists in /usr/bin, skipping")
     
